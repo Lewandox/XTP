@@ -2271,6 +2271,7 @@ pub(crate) mod tests {
     /// registry.
     #[test]
     fn reserved_textures_map_and_give_back_their_tiles() {
+        let _serial = crate::host::submissions::serial();
         let test = "resource::pool::tests::reserved_textures_map_and_give_back_their_tiles";
         let Some(gpu) = crate::testgpu::device(test) else {
             return;

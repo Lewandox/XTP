@@ -6,10 +6,10 @@ use super::*;
 use crate::queue::Written;
 use crate::testgpu::{Kernel, Pass, TitleBuffer, device, pattern};
 
-/// The tests here one at a time: a test that holds the host queue
-/// ([`Gate`]) would stop one that waits inside a submission (which holds
-/// the submission lock) until the gate's timer opens it. Tests elsewhere
-/// wait for the GPU only after submitting, so they are only delayed.
+/// Tests that hold the host queue ([`Gate`]) or wait inside a submission
+/// run one at a time: a held queue would stop one waiting under the
+/// submission lock until the gate's timer opens it. Tests elsewhere wait
+/// for the GPU only after submitting, so they are only delayed.
 pub(crate) fn serial() -> std::sync::MutexGuard<'static, ()> {
     static SERIAL: Mutex<()> = Mutex::new(());
     SERIAL.lock().unwrap_or_else(|e| e.into_inner())

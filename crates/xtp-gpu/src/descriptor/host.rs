@@ -6556,6 +6556,7 @@ void main(uint3 id : SV_DispatchThreadID) {
     #[test]
     fn raw_views_a_submission_in_flight_may_read_stay_until_it_has_run() {
         use crate::testgpu::{TitleBuffer, pattern};
+        let _serial = crate::host::submissions::serial();
         let test = "descriptor::host::tests::raw_views_a_submission_in_flight_may_read_stay_until_it_has_run";
         let Some(gpu) = crate::testgpu::device(test) else {
             return;
@@ -6596,7 +6597,7 @@ void main(uint3 id : SV_DispatchThreadID) {
         heap.make_at(0, &buffer_view(false, &src, structured(20), (0, 4)));
         assert_eq!(heap.pool_state(), (2, 1));
         gate.open();
-        gpu_caught_up(host);
+        reader.settle();
         let old: Vec<u32> = (0..64)
             .map(|i| if i < 24 { pattern(i) } else { 0 })
             .collect();
@@ -6616,7 +6617,9 @@ void main(uint3 id : SV_DispatchThreadID) {
 
     /// Waits until the GPU has run what was handed to the queue so far,
     /// other tests' submissions too (one handed over but not yet in the
-    /// timeline is not waited for by a drain).
+    /// timeline is not waited for by a drain). Waits for the GPU fence
+    /// only, not for host write-back: call `HostList::settle` before
+    /// reading back what a submission wrote.
     fn gpu_caught_up(host: &crate::host::Host) {
         let ticket = host.executing();
         let started = std::time::Instant::now();
@@ -7360,6 +7363,7 @@ void main() {
     #[test]
     fn retired_raw_views_go_back_when_the_fence_reaches_them() {
         use crate::testgpu::TitleBuffer;
+        let _serial = crate::host::submissions::serial();
         let test = "descriptor::host::tests::retired_raw_views_go_back_when_the_fence_reaches_them";
         let Some(gpu) = crate::testgpu::device(test) else {
             return;
@@ -7407,6 +7411,7 @@ void main() {
     #[test]
     fn a_remapped_slot_gets_a_raw_view_once_one_comes_back() {
         use crate::testgpu::{TitleBuffer, TitleList};
+        let _serial = crate::host::submissions::serial();
         let test = "descriptor::host::tests::a_remapped_slot_gets_a_raw_view_once_one_comes_back";
         let Some(gpu) = crate::testgpu::device(test) else {
             return;
@@ -7910,6 +7915,7 @@ void main() {
     #[test]
     fn slots_viewing_the_same_window_share_one_raw_view() {
         use crate::testgpu::TitleBuffer;
+        let _serial = crate::host::submissions::serial();
         let test = "descriptor::host::tests::slots_viewing_the_same_window_share_one_raw_view";
         let Some(gpu) = crate::testgpu::device(test) else {
             return;
